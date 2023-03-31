@@ -44,15 +44,15 @@ def one_d_basis_f(i, x, pmax = pmax_pl):
         else:
             return math.sin(np.pi*n*x)
     
-#generate 3d planck basis (symmetrized over permutation)
+#generate 3d planck basis (symmetrized by permutation)
 def three_d_basis_f_eval(i,j,k, x1, x2, x3):
     
-    res = one_d_basis_f(i, x1)*one_d_basis_f(i, x2)*one_d_basis_f(i, x3)
-    res += one_d_basis_f(i, x2)*one_d_basis_f(i, x3)*one_d_basis_f(i, x1)
-    res += one_d_basis_f(i, x3)*one_d_basis_f(i, x1)*one_d_basis_f(i, x2)
-    res += one_d_basis_f(i, x3)*one_d_basis_f(i, x2)*one_d_basis_f(i, x1)
-    res += one_d_basis_f(i, x2)*one_d_basis_f(i, x1)*one_d_basis_f(i, x3)
-    res += one_d_basis_f(i, x1)*one_d_basis_f(i, x3)*one_d_basis_f(i, x2)
+    res = one_d_basis_f(i, x1)*one_d_basis_f(j, x2)*one_d_basis_f(k, x3)
+    res += one_d_basis_f(i, x2)*one_d_basis_f(j, x3)*one_d_basis_f(k, x1)
+    res += one_d_basis_f(i, x3)*one_d_basis_f(j, x1)*one_d_basis_f(k, x2)
+    res += one_d_basis_f(i, x3)*one_d_basis_f(j, x2)*one_d_basis_f(k, x1)
+    res += one_d_basis_f(i, x2)*one_d_basis_f(j, x1)*one_d_basis_f(k, x3)
+    res += one_d_basis_f(i, x1)*one_d_basis_f(j, x3)*one_d_basis_f(k, x2)
 
     return res/6
 
