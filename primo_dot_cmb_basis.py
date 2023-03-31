@@ -13,6 +13,7 @@ kmax = 1.391727e-01
 Nk_aug = 2500
 pmax = 2 #for primodal basis
 planck_file = "Basis_N200.txt" #n-ijk
+pmax_pl = 14 #pmax for planck early time basis
 line_remove = 208 #9 #from which line to read the file n-ijk
 dk = kmax-kmin
 K = kmax+kmin
@@ -30,12 +31,18 @@ def kbar(x):
     return 2*x*kmax/dk -K/dk
 
 #generate 1d planck basis
-def one_d_basis_f(i, x):
-    m = math.fmod(i,2)
-    n = i+m
-    if m == 0:
-        return math.cos(np.pi*n*x)
+def one_d_basis_f(i, x, pmax = pmax_pl):
+    if i == pmax: #supplementary mode
+        return x**2
+    elif i == pmax-1:
+        return 1/x
     else:
+        m = math.fmod(i,2)
+        n = i+m
+        if m == 0:
+            return math.cos(np.pi*n*x)
+        else:
+            return math.sin(np.pi*n*x)
         return math.sin(np.pi*n*x)
     
 #generate 3d planck basis (symmetrized over permutation)
