@@ -43,7 +43,6 @@ def one_d_basis_f(i, x, pmax = pmax_pl):
             return math.cos(np.pi*n*x)
         else:
             return math.sin(np.pi*n*x)
-        return math.sin(np.pi*n*x)
     
 #generate 3d planck basis (symmetrized over permutation)
 def three_d_basis_f_eval(i,j,k, x1, x2, x3):
