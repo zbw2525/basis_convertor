@@ -203,8 +203,14 @@ def Gamma_array_MIP(): #m: primodal, n: planck
         m_j = int(mijk_array[m][2])
         m_k = int(mijk_array[m][3])
     
-        Gamma_n_m_loop[n][m] = Gamma_n_m(n_i, n_j, n_k, m_i, m_j, m_k, kmax)
+        #Gamma_n_m_loop[n][m] = Gamma_n_m(n_i, n_j, n_k, m_i, m_j, m_k, kmax)
+        #if the calculation time exceed 1h, force it to terminate and return 999
+        try:
+            Gamma_n_m_loop[n][m] = func_timeout(3600, Gamma_n_m, args=(n_i, n_j, n_k, m_i, m_j, m_k, kmax))
 
+        except FunctionTimedOut:
+            Gamma_n_m_loop[n][m] = 999
+            
         Gamma_n_ijk_loop[n][m_i][m_j][m_k] = Gamma_n_m_loop[n][m] #using symmetry over ijk
         Gamma_n_ijk_loop[n][m_k][m_i][m_j] = Gamma_n_m_loop[n][m]
         Gamma_n_ijk_loop[n][m_j][m_k][m_i] = Gamma_n_m_loop[n][m]
