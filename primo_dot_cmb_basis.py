@@ -26,23 +26,30 @@ else:
     pri_basis_1d = gcf.set_up_flat_basis(kmin, kmax, pmax, Nk=Nk_aug, normalise=True)
 
 #functions(internal use)
-#calculate kbar from x, y, z (x = k/kmax)
+#calculate kbar from x, y, z
 def kbar(x):
     return 2*x*kmax/dk -K/dk
 
+def xbar(x): #xbar = (k-kmin)/(kmax-kmin), which is the argument of the fourier modes in planck primodal basis with 1d domain (0,1)
+    return x*kmax/dk-kmin/dk
+
 #generate 1d planck basis
 def one_d_basis_f(i, x, pmax = pmax_pl):
-    if i == pmax: #supplementary mode
-        return x**2
-    elif i == pmax-1:
-        return 1/x
+    if x <= 0.001:
+        result = 0
     else:
-        m = math.fmod(i,2)
-        n = i+m
-        if m == 0:
-            return math.cos(np.pi*n*x)
+        if i == pmax: # check the expression for pmax, pmax-1 modes.If the argument is k, we need convert it to x.
+            result = x**2
+        elif i == pmax-1:
+            result =  1/x
         else:
-            return math.sin(np.pi*n*x)
+            m = np.mod(i,2)
+            n = i+m
+            if m == 0:
+                result = np.cos(np.pi*n*xbar(x))
+            else:
+                result = np.sin(np.pi*n*xbar(x))
+    return result
     
 #generate 3d planck basis (symmetrized by permutation)
 def three_d_basis_f_eval(i,j,k, x1, x2, x3):
