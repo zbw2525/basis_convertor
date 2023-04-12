@@ -408,6 +408,112 @@ def bad_elem_calc_ms(bad_array, atol, rtol, time_max):
                 #print("[{}] Sending result {} to rank {}".format(rank,result,0))
 
     return fixed_elem_array
+#simplify the communication message between ranks (from 1d array with n elements to 1d array
+#with only two elements, [value, index])
+def bad_elem_calc_ms_mod(bad_array, atol, rtol, time_max):
+    #initialize mpi
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
+
+    #get the map between n, m to ijk
+    nijk_array = nijk_map(planck_file, line_remove)
+    mijk_array = m_ijk(pmax)
+    #the map between bad_array element index and n,m is given by bad_array
+
+    #master rank (rank = 0): allocate tasks and integrate result.
+    if rank==0:
+        fixed_elem_array = np.zeros(len(bad_array))
+        # define list of tasks
+        tasklist = (i for i in range(len(bad_array)))
+        #set count of finished ranks
+        finished = 0
+        #create status object for MPI_probe
+        status = MPI.Status()
+
+        for i in range(1,size):
+        # check there are enough jobs for the number of ranks
+        # -1 is a flag to say "no more work" 
+            try:
+                message = next(tasklist)
+            except StopIteration:
+                message = -1
+        
+            # now we send initial job ID's to slaves
+            print("[{}] Sending task: {} to rank {}".format(rank,message,i))
+            comm.isend(message, dest=i, tag=i)
+
+        # Now we check for messages from complete jobs then allocate new jobs to the slaves
+        while finished<size-1:
+            # Check for waiting messages with probe 
+            flag = comm.iprobe(status=status, source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
+        
+            # if a message is waiting then enter this loop to recieve it
+            if flag==True:
+                # status object stores the origin of the message (and tag etc..)
+                source = status.source
+                #recv the message
+                test = comm.irecv(source=source, tag=source)
+                reply = test.wait()
+                #print("[{}] Recieving result: {} from rank {}".format(rank,reply,source))
+            
+                # now check the reply, -1 means the slave receieved a -1 and it's letting
+                # us know that it's finished so we add it to our finshed count
+                # otherwise we send it its next job ID (which may be -1 if there are 
+                # no more jobs)
+                if reply[0]==-1:
+                    finished +=1
+                    print("[{}] Recieved termination finished count: {}".format(rank,finished))
+                else:
+                    #print("[{}] Done with result {}".format(rank,reply))
+                    fixed_elem_array[int(reply[1])] = reply[0]
+                    try:
+                        message = next(tasklist)
+                    except StopIteration:
+                        message = -1
+                    print("[{}] Sending task: {} to rank {}".format(rank,message,source))
+                    comm.isend(message, dest=source, tag=source)
+        
+    # Slave ranks section
+    else:
+        fixed_elem_array = np.zeros(len(bad_array))
+        # this loop keeps us checking for jobs until we recieve a -1
+        while True:
+            # recvout next job ID
+            test = comm.irecv(source=0, tag=rank)
+            task = test.wait()#task: job ID
+            print("[{}] Recieving task: {} from rank {}".format(rank,task,0))
+        
+            # is job ID = -1 then no more jobs and we can stop
+            # We let the master know we are stopping by sending -1 back
+            # Otherwise we do the job associated with the ID we recieve
+            if task==-1:
+                comm.isend(np.array([-1]), dest=0, tag=rank)
+                print("[{}] Sending termination to rank {}".format(rank,0))
+                break
+            else:
+                n = bad_array[task][0]
+                m = bad_array[task][1]
+
+                n_i = int(nijk_array[n][1])
+                n_j = int(nijk_array[n][2])
+                n_k = int(nijk_array[n][3])
+                m_i = int(mijk_array[m][1])
+                m_j = int(mijk_array[m][2])
+                m_k = int(mijk_array[m][3])
+                # This single line is the actual job
+                result = np.zeros(len(bad_array))
+                try:
+                    result = func_timeout(time_max, Gamma_n_m_nb, args=(n_i, n_j, n_k, m_i, m_j, m_k, kmax, atol, rtol))
+
+                except FunctionTimedOut:
+                    result = 999
+                
+                # now we send our result back to the master
+                comm.isend(np.array([result,task]), dest=0, tag=rank)
+                #print("[{}] Sending result {} to rank {}".format(rank,result,0))
+
+    return fixed_elem_array
 
 #main
 bad_array = bad_elem_finder(matrix_temp_file)
