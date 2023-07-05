@@ -1,5 +1,7 @@
 #!/usr/bin/env python3 
 #import
+##This code need the cooperation with config, evol_deriv, and ortho_mixed_basis_3d from primodal. 
+##This file is a rewritten version of primodal, which is compatible with MPI, in the case of DBI inflation. A better way to parallelize primodal is using job array directly.
 import numpy as np
 import dbi_funcs_np
 from potential_def_arg import add_bump_reso, add_reso, add_tanh, dbi_IR_quadratic_potential_funcs, quadratic_potential_funcs, starobinsky_pot_funcs
